@@ -18,6 +18,10 @@ func ResponseWithJSON(w http.ResponseWriter, status int, payload interface{}) {
 
 }
 
+func ReadJSON(r *http.Request, data any) error {
+	return json.NewDecoder(r.Body).Decode(data)
+}
+
 func ResponseWithError(w http.ResponseWriter, status int, msg string) {
 	ResponseWithJSON(w, status, map[string]string{"error": msg})
 }
