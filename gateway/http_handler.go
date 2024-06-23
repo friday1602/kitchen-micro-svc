@@ -1,11 +1,14 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/friday1602/common"
 	pb "github.com/friday1602/common/api"
 	"github.com/go-chi/chi/v5"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type handler struct {
@@ -13,7 +16,7 @@ type handler struct {
 }
 
 func NewHandler(client pb.OrderServiceClient) *handler {
-	return &handler{client} 
+	return &handler{client}
 }
 
 func (h *handler) registerRoutes(r *chi.Mux) {
@@ -28,10 +31,41 @@ func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 		common.ResponseWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	
+	if err := validateItems(items); err != nil {
+		common.ResponseWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
-	h.client.CreateOrder(r.Context(), &pb.CreateOrderRequest{
+	order, err := h.client.CreateOrder(r.Context(), &pb.CreateOrderRequest{
 		CustomerID: customerID,
-		Items: items,
-	}, 	)
+		Items:      items,
+	})
+
+	rStatus := status.Convert(err)
+	if rStatus != nil {
+		if rStatus.Code() != codes.InvalidArgument {
+			common.ResponseWithError(w, http.StatusBadRequest, rStatus.Message())
+			return
+		}
+		common.ResponseWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	common.ResponseWithJSON(w, http.StatusOK, order)
+}
+
+func validateItems(items []*pb.ItemWithQuantity) error {
+	if len(items) == 0 {
+		return errors.New("items must have at least one item")
+	}
+
+	for _, i := range items {
+		if i.ID == "" {
+			return errors.New("item's ID is required")
+		}
+
+		if i.Quantity <= 0 {
+			return errors.New("item has invalid quantity")
+		}
+	}
+	return nil
 }
