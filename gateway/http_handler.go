@@ -17,7 +17,7 @@ func NewHandler(client pb.OrderServiceClient) *handler {
 }
 
 func (h *handler) registerRoutes(r *chi.Mux) {
-	r.Get("api/customers/{customerID}/orders", h.HandleCreateOrder)
+	r.Post("/api/customers/{customerID}/orders", h.HandleCreateOrder)
 }
 
 func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
