@@ -3,14 +3,19 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/friday1602/common"
 	pb "github.com/friday1602/common/api"
+)
+
+var (
+	httpAddr         = common.EnvString("HTTP_PORT", ":8080")
+	orderServiceAddr = "localhost:2000" 
 )
 
 func main() {
@@ -18,8 +23,6 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal(err)
 	}
-	port := os.Getenv("HTTP_PORT")
-	orderServiceAddr := os.Getenv("ORDER_SERVICE_ADDR")
 
 	conn, err := grpc.NewClient(orderServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -35,8 +38,8 @@ func main() {
 	handler := NewHandler(c)
 	handler.registerRoutes(r)
 
-	log.Println("listening to port", port)
-	if err := http.ListenAndServe(port, r); err != nil {
+	log.Println("listening to port", httpAddr)
+	if err := http.ListenAndServe(httpAddr, r); err != nil {
 		log.Fatal(err)
 
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/friday1602/common"
 	pb "github.com/friday1602/common/api"
 	"github.com/go-chi/chi/v5"
 )
@@ -23,6 +24,10 @@ func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 	customerID := r.PathValue("customerID")
 
 	var items []*pb.ItemWithQuantity
+	if err := common.ReadJSON(r, &items); err != nil {
+		common.ResponseWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	
 
 	h.client.CreateOrder(r.Context(), &pb.CreateOrderRequest{

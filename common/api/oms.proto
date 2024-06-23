@@ -5,7 +5,7 @@ option go_package = "github.com/friday1602/common/api";
 package api;
 
 message Order {
-    string Id = 1;
+    string ID = 1;
     string customerID = 2;
     string Status = 3;
     repeated Item Items = 4; 
